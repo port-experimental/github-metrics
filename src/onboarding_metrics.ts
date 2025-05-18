@@ -29,7 +29,7 @@ export async function getMemberAddDates(
   const response = await octokit.request(`GET /enterprises/${enterprise}/audit-log`, {
     phrase: "action:org.add_member",
     include: "web",
-    // enterprise: 'ENTERPRISE',
+    enterprise: process.env.X_GITHUB_ENTERPRISE,
     headers: {
       'X-GitHub-Api-Version': '2022-11-28'
     }
@@ -100,8 +100,9 @@ export async function getDeveloperStats(
       // Search for first PR
       try {
         // Use more specific search query and add state to filter only merged PRs
-        const { data: pulls } = await octokit.search.issuesAndPullRequests({
+        const { data: pulls } = await octokit.request('GET /search/issues ', {
           q: `author:${login} type:pr org:${orgName} is:merged`,
+          advanced_search: true,
           sort: 'created',
           order: 'asc',
           per_page: 10,

@@ -40,7 +40,7 @@ async function main() {
       
       const joinRecords = await getMemberAddDates(ENTERPRISE_NAME, AUTH_TOKEN);
       console.log(joinRecords);
-
+      
       const repos = await getRepositories(ORG_NAME, AUTH_TOKEN);
       console.log(`Got ${repos.length} repos`);
       
@@ -94,42 +94,20 @@ async function main() {
       }
     });
     
+    program
+    .command('pr-metrics')
+    .description('Send PR metrics to Port')
+    .action(async () => {
+      console.log('Calculating PR metrics...');
+    });
+    
+    await program.parseAsync();
+    
+    
+    
+  } catch (error) {
+    console.error('Error:', error);
   }
-  
-  
-  
-  // Time to First Commit: (First commit date) - (Access grant date)
-  // Time to First PR: (First PR creation date) - (Access grant date)
-  // Time to 10th Commit: (First commit date) - (Access grant date)
-  // Time to 10th PR: (10th PR creation date) - (Access grant date)
-  // Initial Review Response Time: (First PR first comment timestamp) - (First PR creation timestamp)
-  // First Month Success Metrics: Percentile ranking average for each developer within their Github Teams - across (P_commits + P_PRs + P_PRs_merged + P_reviews) / 4
-  
-});
-
-program
-.command('pr-metrics')
-.description('Send PR metrics to Port')
-.action(async () => {
-  console.log('Calculating PR metrics...');
-});
-
-program
-.command('pr-metrics')
-.description('Send pipeline metrics to Port')
-.action(async () => {
-  console.log('Calculating metrics...');
-});
-
-await program.parseAsync();
-
-const gh = new Octokit({
-  auth: X_GITHUB_TOKEN,
-});
-} catch (error) {
-  
-  console.error('Error:', error);
-}
 }
 
 main();
