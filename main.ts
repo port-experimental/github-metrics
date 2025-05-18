@@ -14,10 +14,10 @@ async function main() {
   const PORT_CLIENT_SECRET = process.env.PORT_CLIENT_SECRET;
   const AUTH_TOKEN = process.env.X_GITHUB_TOKEN;
   const ENTERPRISE_NAME = process.env.X_GITHUB_ENTERPRISE;
-  const ORG_NAME = process.env.X_GITHUB_ORG;
+  const GITHUB_ORGS = process.env.X_GITHUB_ORGS?.split(',') || [];
   
-  if (!PORT_CLIENT_ID || !PORT_CLIENT_SECRET || !AUTH_TOKEN || !ENTERPRISE_NAME || !ORG_NAME) {
-    console.log('Please provide env vars PORT_CLIENT_ID, PORT_CLIENT_SECRET, X_GITHUB_TOKEN, X_GITHUB_ENTERPRISE, and X_GITHUB_ORG');
+  if (!PORT_CLIENT_ID || !PORT_CLIENT_SECRET || !AUTH_TOKEN || !ENTERPRISE_NAME || GITHUB_ORGS.length === 0) {
+    console.log('Please provide env vars PORT_CLIENT_ID, PORT_CLIENT_SECRET, X_GITHUB_TOKEN, X_GITHUB_ENTERPRISE, and X_GITHUB_ORGS');
     process.exit(0);
   }
   
@@ -41,7 +41,7 @@ async function main() {
       const joinRecords = await getMemberAddDates(ENTERPRISE_NAME, AUTH_TOKEN);
       console.log(joinRecords);
       
-      const repos = await getRepositories(ORG_NAME, AUTH_TOKEN);
+      const repos = await getRepositories(GITHUB_ORGS, AUTH_TOKEN);
       console.log(`Got ${repos.length} repos`);
       
       // Only go over users without complete onboarding metrics in Port
@@ -51,7 +51,12 @@ async function main() {
       // For each user, get the onboarding metrics
       for (const user of usersWithoutOnboardingMetrics) {
         const joinDate = joinRecords.find(record => record.user === user.identifier)?.createdAt;
-        const stats = await getDeveloperStats(ORG_NAME, AUTH_TOKEN, repos, user.identifier, joinDate);
+        if (!joinDate) {
+          console.log(`No join date found for ${user.identifier}. Skipping...`);
+          continue;
+        }
+        console.log(`Getting stats for ${user.identifier} with join date ${joinDate}`);
+        const stats = await getDeveloperStats(GITHUB_ORGS, AUTH_TOKEN, user.identifier, joinDate);
         const { firstCommitDate, tenthCommitDate, firstPRDate, tenthPRDate } = stats.find(record => record.login === user.identifier) || {};
         
         const props: Record<string, Date> = {};
@@ -74,6 +79,8 @@ async function main() {
         if (tenthPRDate) {
           props['tenth_pr'] = new Date(tenthPRDate);
         }
+
+
         
         try {
           console.log(`attempting to update ${user.identifier}`);
