@@ -5,6 +5,7 @@ import { getEntities, upsertEntity, upsertProps } from './src/port_client';
 import { getDeveloperStats, getMemberAddDates, hasCompleteOnboardingMetrics, getRepositories } from './src/onboarding_metrics';
 import { checkRateLimits } from './src/utils';
 import { getPRMetrics } from './src/pr_metrics';
+import { getWorkflowMetrics } from './src/workflow_metrics';
 
 if (process.env.GITHUB_ACTIONS !== 'true') {
   require('dotenv').config();
@@ -80,23 +81,23 @@ async function main() {
         if (tenthPRDate) {
           props['tenth_pr'] = new Date(tenthPRDate);
         }
-
+        
         if (initialReviewResponseTime) {
           props['initial_review_response_time'] = initialReviewResponseTime;
         }
-
+        
         if (timeToFirstCommit) {
           props['time_to_first_commit'] = timeToFirstCommit;
         }
-
+        
         if (timeToFirstPR) {
           props['time_to_first_pr'] = timeToFirstPR;
         }
-
+        
         if (timeTo10thCommit) {
           props['time_to_10th_commit'] = timeTo10thCommit;
         }
-
+        
         if (timeTo10thPR) {
           props['time_to_10th_pr'] = timeTo10thPR;
         }
@@ -128,20 +129,20 @@ async function main() {
       await checkRateLimits(AUTH_TOKEN);
       const repos = await getRepositories(GITHUB_ORGS, AUTH_TOKEN);
       console.log(`Got ${repos.length} repos`);
-
+      
       const prMetrics = await getPRMetrics(repos, AUTH_TOKEN);
       console.log(prMetrics);
-
+      
       for (const record of prMetrics) {
         const { prSize, prLifetime, prPickupTime, prSuccessRate, reviewParticipation } = record;
-
+        
         const props: Record<string, any> = {};
         props['pr_size'] = prSize;
         props['pr_lifetime'] = prLifetime;
         props['pr_pickup_time'] = prPickupTime;
         props['pr_success_rate'] = prSuccessRate;
         props['review_participation'] = reviewParticipation;
-
+        
         try {
           console.log(`attempting to update ${record.repoName}-${record.pullRequestId}`);
           await upsertProps(
@@ -158,16 +159,17 @@ async function main() {
       }
     });
     
+    program
+    .command('workflow-metrics')
+    .description('Send GitHub Workflow metrics to Port')
+    .action(async () => {
+      console.log('Calculating Workflows metrics...');
+      await checkRateLimits(AUTH_TOKEN);
+      const repos = await getRepositories(GITHUB_ORGS, AUTH_TOKEN);
+      await getWorkflowMetrics(repos, AUTH_TOKEN);
+    });
+    
     await program.parseAsync();
-    
-  program
-  .command('workflows-metrics')
-  .description('Send GitHub Workflow metrics to Port')
-  .action(async () => {
-    console.log('Calculating Workflows metrics...');
-    await checkRateLimits(AUTH_TOKEN);
-  });
-    
     
   } catch (error) {
     console.error('Error:', error);
