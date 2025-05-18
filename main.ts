@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import { Octokit } from '@octokit/rest';
 
-import { getEntities, upsertEntity } from './src/port_client';
+import { getEntities, upsertEntity, upsertProps } from './src/port_client';
 import { getDeveloperStats, getMemberAddDates, hasCompleteOnboardingMetrics, getRepositories } from './src/onboarding_metrics';
 import { checkRateLimits } from './src/utils';
+import { getPRMetrics } from './src/pr_metrics';
 
 if (process.env.GITHUB_ACTIONS !== 'true') {
   require('dotenv').config();
@@ -124,10 +125,48 @@ async function main() {
     .description('Send PR metrics to Port')
     .action(async () => {
       console.log('Calculating PR metrics...');
+      await checkRateLimits(AUTH_TOKEN);
+      const repos = await getRepositories(GITHUB_ORGS, AUTH_TOKEN);
+      console.log(`Got ${repos.length} repos`);
+
+      const prMetrics = await getPRMetrics(repos, AUTH_TOKEN);
+      console.log(prMetrics);
+
+      for (const record of prMetrics) {
+        const { prSize, prLifetime, prPickupTime, prSuccessRate, reviewParticipation } = record;
+
+        const props: Record<string, any> = {};
+        props['pr_size'] = prSize;
+        props['pr_lifetime'] = prLifetime;
+        props['pr_pickup_time'] = prPickupTime;
+        props['pr_success_rate'] = prSuccessRate;
+        props['review_participation'] = reviewParticipation;
+
+        try {
+          console.log(`attempting to update ${record.repoName}-${record.pullRequestId}`);
+          await upsertProps(
+            'githubPullRequest',
+            `${record.repoName}-${record.pullRequestId}`,
+            {
+              ...props
+            },
+          );
+          console.log(`Updated PR metrics for repo ${record.repoName}-${record.pullRequestId}`);
+        } catch (error) {
+          console.error(`Failed to update repo ${record.repoName}-${record.pullRequestId}:`, error);
+        }
+      }
     });
     
     await program.parseAsync();
     
+  program
+  .command('workflows-metrics')
+  .description('Send GitHub Workflow metrics to Port')
+  .action(async () => {
+    console.log('Calculating Workflows metrics...');
+    await checkRateLimits(AUTH_TOKEN);
+  });
     
     
   } catch (error) {

@@ -114,6 +114,11 @@ export async function getUser(identifier) {
     return client.get(`/blueprints/_user/entities/${identifier}`);
 }
 
+export async function upsertProps(entity, identifier, properties) {
+    const client = await ApiClient.getClient();
+    return client.post(`/blueprints/${entity}/entities/${identifier}/props?upsert=true&merge=true`, properties);
+}
+
 export async function upsertEntity(entity, identifier, title, properties, relations, team: string[] | null = null) {
     const client = await ApiClient.getClient();
     const payload: any = {

@@ -44,11 +44,11 @@ export async function getRepositories(
     const octokit = new Octokit({ auth: authToken });
     const repos: any[] = [];
     for (const orgName of orgNames) {
-        const { data: repos } = await octokit.repos.listForOrg({
+        const { data: orgRepos } = await octokit.repos.listForOrg({
             org: orgName,
             per_page: 100,
         });
-        repos.push(...repos);
+        repos.push(...orgRepos);
     }
     
     return repos;
