@@ -57,9 +57,9 @@ async function main() {
         }
         console.log(`Getting stats for ${user.identifier} with join date ${joinDate}`);
         const stats = await getDeveloperStats(GITHUB_ORGS, AUTH_TOKEN, user.identifier, joinDate);
-        const { firstCommitDate, tenthCommitDate, firstPRDate, tenthPRDate } = stats.find(record => record.login === user.identifier) || {};
+        const { firstCommitDate, tenthCommitDate, firstPRDate, tenthPRDate, initialReviewResponseTime, timeToFirstCommit, timeToFirstPR, timeTo10thCommit, timeTo10thPR } = stats.find(record => record.login === user.identifier) || {};
         
-        const props: Record<string, Date> = {};
+        const props: Record<string, any> = {};
         if (!firstCommitDate && !firstPRDate && !tenthCommitDate && !tenthPRDate) {
           continue;
         }
@@ -80,7 +80,25 @@ async function main() {
           props['tenth_pr'] = new Date(tenthPRDate);
         }
 
+        if (initialReviewResponseTime) {
+          props['initial_review_response_time'] = initialReviewResponseTime;
+        }
 
+        if (timeToFirstCommit) {
+          props['time_to_first_commit'] = timeToFirstCommit;
+        }
+
+        if (timeToFirstPR) {
+          props['time_to_first_pr'] = timeToFirstPR;
+        }
+
+        if (timeTo10thCommit) {
+          props['time_to_10th_commit'] = timeTo10thCommit;
+        }
+
+        if (timeTo10thPR) {
+          props['time_to_10th_pr'] = timeTo10thPR;
+        }
         
         try {
           console.log(`attempting to update ${user.identifier}`);
