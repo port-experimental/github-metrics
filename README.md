@@ -44,7 +44,7 @@ The metric exporter needs access to the Github API to pull the relevant data to 
 
 1. Copy the example env file and fill out with the relevant access keys
 ```
-cp .env.example .env`
+cp .env.example .env
 ```
 
 2. Install the CLI
@@ -63,7 +63,81 @@ gh-metrics workflow-metrics
 
 ### Running as a Github Action 
 
-If you want to run this metric exporter as a Github Action, feel free to use this action configuration.
+If you want to run this metric exporter as a Github Action, feel free to use this action configuration. This will run the metric collectors on a daily basis
+
+##### .github/workflows/collect_metrics.yml
+```
+name: collect_metrics
+on:
+    workflow_dispatch:
+    schedule:
+      - cron: '0 0 * * *'
+jobs:
+    onboarding:
+      name: onboarding_metrics
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: oven-sh/setup-bun@v2
+        - run: bun run src/main.ts onboarding-metrics
+          env: # Or as an environment variable
+            X_GITHUB_ORGS: ${{ secrets.X_GITHUB_ORGS }}
+            X_GITHUB_ENTERPRISE: ${{ secrets.X_GITHUB_ENTERPRISE }}
+            X_GITHUB_TOKEN: ${{ secrets.X_GITHUB_TOKEN }}
+            PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+            PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+    pr:
+      name: pr_metrics
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: oven-sh/setup-bun@v2
+        - run: bun run src/main.ts pr-metrics
+          env: # Or as an environment variable
+            X_GITHUB_ORGS: ${{ secrets.X_GITHUB_ORGS }}
+            X_GITHUB_ENTERPRISE: ${{ secrets.X_GITHUB_ENTERPRISE }}
+            X_GITHUB_TOKEN: ${{ secrets.X_GITHUB_TOKEN }}
+            PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+            PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+    workflow:
+      name: workflow_metrics
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: oven-sh/setup-bun@v2
+        - run: bun run src/main.ts workflow-metrics
+          env: # Or as an environment variable
+            X_GITHUB_ORGS: ${{ secrets.X_GITHUB_ORGS }}
+            X_GITHUB_ENTERPRISE: ${{ secrets.X_GITHUB_ENTERPRISE }}
+            X_GITHUB_TOKEN: ${{ secrets.X_GITHUB_TOKEN }}
+            PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+            PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}  
+```
+
+##### .github/workflows/pr_metrics
+```
+name: pr_metrics
+on:
+    workflow_dispatch:
+    schedule:
+      - cron: '0 0 * * *'
+jobs:
+    my-job:
+      name: pr_metrics
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: oven-sh/setup-bun@v2
+        - run: bun run src/main.ts pr-metrics
+          env: # Or as an environment variable
+            X_GITHUB_ORGS: ${{ secrets.X_GITHUB_ORGS }}
+            X_GITHUB_ENTERPRISE: ${{ secrets.X_GITHUB_ENTERPRISE }}
+            X_GITHUB_TOKEN: ${{ secrets.X_GITHUB_TOKEN }}
+            PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+            PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+```
+
+
 
 
 
