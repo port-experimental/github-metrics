@@ -1,7 +1,75 @@
 # Github Metrics
 
+This is a metric exporter for Github. It uses an auth token to pull data from the API and prepare a series of metrics, which are persisted in Port.
+
+
+## Metrics
+
+The metrics currently supported are:
+
+- For each member of each listed Github Org:
+  - Join Date
+  - Date of and time to 1st Commit
+  - Date of and time to 10th Commit
+  - Date of and time to 1st PR
+  - Date of and time to 10th PR
+  - Date of and time to first PR review
+- For each PR:
+  - PR size
+  - PR lifetime
+  - PR pickup time
+  - Review participation
+- For each Action:
+  - For both last 30 and last 90 days:
+    - Median, Min, Max and Mean Duration
+    - Total runs
+    - Total failures
+    - Success rate
+
+## Configuration
+
+### Configuring the PAT
+
+The metric exporter needs access to the Github API to pull the relevant data to calculate the above metrics. Please configure a classic PAT with the following access:
+
+- `repo`
+- `workflow`
+- `read:org`
+- `read:user`
+- `user:email`
+- `read:enterprise` - this is required along with the below to access the audit log to determine join dates
+- `read:audit_log`
+
+### Running Locally
+
+1. Copy the example env file and fill out with the relevant access keys
+```
+cp .env.example .env`
+```
+
+2. Install the CLI
+```
+npm install
+npm run build
+npm link
+```
+
+3. Run!
+```
+gh-metrics onboarding-metrics
+gh-metrics pr-metrics
+gh-metrics workflow-metrics
+```
+
+### Running as a Github Action 
+
+If you want to run this metric exporter as a Github Action, feel free to use this action configuration.
+
+
 
 ## Blueprints
+
+Please create a blueprint with the following configuration
 
 ```
 {

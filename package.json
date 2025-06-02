@@ -4,8 +4,16 @@
   "main": "main.ts",
   "author": "Elliott Spira <elliott@getport.io>",
   "license": "MIT",
+  "bin": {
+    "gh-metrics": "./dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
   "devDependencies": {
-    "@types/node": "^22.13.10"
+    "@types/lodash": "^4.17.17",
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@octokit/rest": "^21.1.1",

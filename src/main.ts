@@ -1,11 +1,13 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander';
 import { Octokit } from '@octokit/rest';
 
-import { getEntities, upsertEntity, upsertProps } from './src/port_client';
-import { getDeveloperStats, getMemberAddDates, hasCompleteOnboardingMetrics, getRepositories } from './src/onboarding_metrics';
-import { checkRateLimits } from './src/utils';
-import { getPRMetrics } from './src/pr_metrics';
-import { getWorkflowMetrics } from './src/workflow_metrics';
+import { getEntities, upsertEntity, upsertProps } from './port_client';
+import { getDeveloperStats, getMemberAddDates, hasCompleteOnboardingMetrics, getRepositories } from './onboarding_metrics';
+import { checkRateLimits } from './utils';
+import { getPRMetrics } from './pr_metrics';
+import { getWorkflowMetrics } from './workflow_metrics';
 
 if (process.env.GITHUB_ACTIONS !== 'true') {
   require('dotenv').config();
@@ -47,7 +49,7 @@ async function main() {
       console.log(`Got ${repos.length} repos`);
       
       // Only go over users without complete onboarding metrics in Port
-      const usersWithoutOnboardingMetrics = githubUsers.entities.filter(user => !hasCompleteOnboardingMetrics(user));
+      const usersWithoutOnboardingMetrics = githubUsers.entities.filter((user: any) => !hasCompleteOnboardingMetrics(user));
       console.log(`Found ${usersWithoutOnboardingMetrics.length} users without complete onboarding metrics`);
       
       // For each user, get the onboarding metrics

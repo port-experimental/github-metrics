@@ -89,17 +89,17 @@ export async function getClient() {
     return ApiClient.getClient();
 }
 
-export async function deleteAllEntities(entityType) {
+export async function deleteAllEntities(entityType: string) {
     const client = await ApiClient.getClient();
     return client.delete(`/blueprints/${entityType}/all-entities`);
     
 }
-export async function getEntities(entityType) {
+export async function getEntities(entityType: string) {
     const client = await ApiClient.getClient();
     return client.get(`/blueprints/${entityType}/entities`);
 }
 
-export async function getEntity(entityType, identifier) {
+export async function getEntity(entityType: string, identifier: string) {
     const client = await ApiClient.getClient();
     return client.get(`/blueprints/${entityType}/entities/${identifier}`);
 }
@@ -109,12 +109,12 @@ export async function getUsers() {
     return client.get('/blueprints/_user/entities');
 }
 
-export async function getUser(identifier) {
+export async function getUser(identifier: string) {
     const client = await ApiClient.getClient();
     return client.get(`/blueprints/_user/entities/${identifier}`);
 }
 
-export async function upsertProps(entity, identifier, properties) {
+export async function upsertProps(entity: string, identifier: string, properties: Record<string, any>) {
     const client = await ApiClient.getClient();
     return client.post(`/blueprints/${entity}/entities?upsert=true&merge=true`, {
         identifier,
@@ -122,7 +122,7 @@ export async function upsertProps(entity, identifier, properties) {
     });
 }
 
-export async function upsertEntity(entity, identifier, title, properties, relations, team: string[] | null = null) {
+export async function upsertEntity(entity: string, identifier: string, title: string, properties: Record<string, any>, relations: Record<string, any>, team: string[] | null = null) {
     const client = await ApiClient.getClient();
     const payload: any = {
         identifier,
