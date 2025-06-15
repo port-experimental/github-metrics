@@ -1,4 +1,6 @@
 import { Octokit } from '@octokit/rest';
+import _ from 'lodash';
+import { upsertProps } from './port_client';
 
 interface PRMetrics {
     repoId: string;
@@ -21,9 +23,7 @@ interface PRMetrics {
     reviewComments: number;
 }
 
-export async function getPRMetrics(repos: any[], authToken: string): Promise<PRMetrics[]> {
-    const prMetrics: PRMetrics[] = [];
-
+export async function calculateAndStorePRMetrics(repos: any[], authToken: string): Promise<void> {
     const octokit = new Octokit({ auth: authToken });
     for (const repo of repos) {
         const { data: prs } = await octokit.rest.pulls.list({
@@ -46,7 +46,6 @@ export async function getPRMetrics(repos: any[], authToken: string): Promise<PRM
                 pull_number: pr.number,
             });
 
-            console.log(reviews);
             const record: PRMetrics = {
                 repoId: repo.id,
                 repoName: repo.name,
@@ -63,14 +62,24 @@ export async function getPRMetrics(repos: any[], authToken: string): Promise<PRM
                 comments: prData.comments,
                 reviewComments: prData.review_comments,
             };
+
+            const props: Record<string, any> = _.chain(record)
+            .pick(['prSize', 'prLifetime', 'prPickupTime', 'prSuccessRate', 'reviewParticipation'])
+            .mapKeys((_value, key) => _.snakeCase(key));
             
-            prMetrics.push(record);
+            try {
+              console.log(`attempting to update ${record.repoName}-${record.pullRequestId}`);
+              await upsertProps(
+                'githubPullRequest',
+                `${record.repoName}-${record.pullRequestId}`,
+                props,
+              );
+              console.log(`Updated PR metrics for repo ${record.repoName}-${record.pullRequestId}`);
+            } catch (error) {
+              console.error(`Failed to update repo ${record.repoName}-${record.pullRequestId}:`, error);
+            }
         }
     }
-
-    console.log(prMetrics);
-
-    return prMetrics;
 }
 
 

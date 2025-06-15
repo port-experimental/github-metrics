@@ -74,7 +74,7 @@ export async function getWorkflowMetrics(repos: any[], authToken: string): Promi
         }
         
         // Calculate metrics for each workflow
-        for (const [workflowId, workflowRuns] of workflowMetricMap.entries()) {
+        for (const [_workflowId, workflowRuns] of workflowMetricMap.entries()) {
             if (workflowRuns.length === 0) {
                 continue;
             }
@@ -85,17 +85,33 @@ export async function getWorkflowMetrics(repos: any[], authToken: string): Promi
             const last30DaysSuccessRuns = last30DaysRuns.filter(run => run.workflowStatus === 'success');
             const last90DaysSuccessRuns = last90DaysRuns.filter(run => run.workflowStatus === 'success');
             
-            await upsertProps('githubWorkflow', 
-                `${repository.name}${workflowRuns[0].workflowId}`,
-                {
-                    medianDuration_last_30_days: last30DaysSuccessRuns[Math.floor(last30DaysSuccessRuns.length / 2)].workflowRunDuration,
+            console.log(`Upserting metrics for ${repository.name}${workflowRuns[0].workflowId}, ${JSON.stringify({
+                    medianDuration_last_30_days: last30DaysSuccessRuns[Math.floor(last30DaysSuccessRuns.length / 2)]?.workflowRunDuration ?? 0,
                     maxDuration_last_30_days: last30DaysSuccessRuns.reduce((acc, run) => Math.max(acc, run.workflowRunDuration), 0),
                     minDuration_last_30_days: last30DaysSuccessRuns.reduce((acc, run) => Math.min(acc, run.workflowRunDuration), 0),
                     meanDuration_last_30_days: last30DaysSuccessRuns.reduce((acc, run) => acc + run.workflowRunDuration, 0) / last30DaysSuccessRuns.length,
                     totalRuns_last_30_days: last30DaysRuns.length,
                     totalFailures_last_30_days: last30DaysRuns.filter(run => run.workflowStatus !== 'success').length,
                     successRate_last_30_days: last30DaysSuccessRuns.length / last30DaysRuns.length,
-                    medianDuration_last_90_days: last90DaysSuccessRuns[Math.floor(last90DaysSuccessRuns.length / 2)].workflowRunDuration,
+                    medianDuration_last_90_days: last90DaysSuccessRuns[Math.floor(last90DaysSuccessRuns.length / 2)]?.workflowRunDuration ?? 0,
+                    maxDuration_last_90_days: last90DaysSuccessRuns.reduce((acc, run) => Math.max(acc, run.workflowRunDuration), 0),
+                    minDuration_last_90_days: last90DaysSuccessRuns.reduce((acc, run) => Math.min(acc, run.workflowRunDuration), 0),
+                    meanDuration_last_90_days: last90DaysSuccessRuns.reduce((acc, run) => acc + run.workflowRunDuration, 0) / last90DaysSuccessRuns.length,
+                    totalRuns_last_90_days: last90DaysRuns.length,
+                    totalFailures_last_90_days: last90DaysRuns.filter(run => run.workflowStatus !== 'success').length,
+                    successRate_last_90_days: last90DaysSuccessRuns.length / last90DaysRuns.length,
+                })}`);
+            await upsertProps('githubWorkflow', 
+                `${repository.name}${workflowRuns[0].workflowId}`,
+                {
+                    medianDuration_last_30_days: last30DaysSuccessRuns[Math.floor(last30DaysSuccessRuns.length / 2)]?.workflowRunDuration ?? 0,
+                    maxDuration_last_30_days: last30DaysSuccessRuns.reduce((acc, run) => Math.max(acc, run.workflowRunDuration), 0),
+                    minDuration_last_30_days: last30DaysSuccessRuns.reduce((acc, run) => Math.min(acc, run.workflowRunDuration), 0),
+                    meanDuration_last_30_days: last30DaysSuccessRuns.reduce((acc, run) => acc + run.workflowRunDuration, 0) / last30DaysSuccessRuns.length,
+                    totalRuns_last_30_days: last30DaysRuns.length,
+                    totalFailures_last_30_days: last30DaysRuns.filter(run => run.workflowStatus !== 'success').length,
+                    successRate_last_30_days: last30DaysSuccessRuns.length / last30DaysRuns.length,
+                    medianDuration_last_90_days: last90DaysSuccessRuns[Math.floor(last90DaysSuccessRuns.length / 2)]?.workflowRunDuration ?? 0,
                     maxDuration_last_90_days: last90DaysSuccessRuns.reduce((acc, run) => Math.max(acc, run.workflowRunDuration), 0),
                     minDuration_last_90_days: last90DaysSuccessRuns.reduce((acc, run) => Math.min(acc, run.workflowRunDuration), 0),
                     meanDuration_last_90_days: last90DaysSuccessRuns.reduce((acc, run) => acc + run.workflowRunDuration, 0) / last90DaysSuccessRuns.length,

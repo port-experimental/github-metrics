@@ -1,4 +1,6 @@
 import { Octokit } from '@octokit/rest';
+import _ from 'lodash';
+import { upsertEntity } from './port_client';
 
 interface DeveloperStats {
     login: string;
@@ -52,6 +54,21 @@ export async function getRepositories(
     }
     
     return repos;
+}
+
+export async function calculateAndStoreDeveloperStats(
+    orgNames: string[],
+    authToken: string,
+    user: any,
+    joinDate: string 
+): Promise<void> {
+    const stats = await getDeveloperStats(orgNames, authToken, user.identifier, joinDate);
+    const record = stats.find(rec => rec.login === user.identifier);
+    if (!record) {
+        console.log(`No record found for ${user.identifier}, unprocessable, skipping...`);
+        return;
+    }
+    return storeDeveloperStats(user, record);
 }
 
 export async function getDeveloperStats(
@@ -144,6 +161,27 @@ export async function getDeveloperStats(
         return stats;
     } catch (error) {
         throw new Error(`Failed to fetch developer stats for ${login}: ${error}`);
+    }
+}
+
+export async function storeDeveloperStats(user: any, record: DeveloperStats) {
+    const props: Record<string, any> = _.chain(record)
+        .pick(['login', 'joinDate', 'firstCommitDate', 'tenthCommitDate', 'firstPRDate', 'tenthPRDate', 'initialReviewResponseTime', 'timeToFirstCommit', 'timeToFirstPR', 'timeTo10thCommit', 'timeTo10thPR'])
+        .mapKeys((_value, key) => _.snakeCase(key.replace('Date', '')));
+    
+    try {
+        console.log(`attempting to update ${user.identifier}`);
+        console.log(`Setting props: ${JSON.stringify(props)}`);
+        await upsertEntity(
+            'githubUser',
+            user.identifier,
+            user.title,
+            props,
+            user.relations
+        );
+        console.log(`Updated first commit and PR dates for user ${user.identifier}`);
+    } catch (error) {
+        console.error(`Failed to update user ${user.identifier}:`, error);
     }
 }
 
